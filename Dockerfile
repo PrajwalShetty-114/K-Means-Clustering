@@ -38,4 +38,4 @@ COPY --from=lfs-fetcher /repo/app.py .
 
 # 4. Run the application
 # Render provides the PORT environment variable
-CMD gunicorn -w 4 -b 0.0.0.0:$PORT app:app
+CMD gunicorn -w 1 --timeout 120 -b 0.0.0.0:$PORT app:app
