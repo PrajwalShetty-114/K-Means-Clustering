@@ -100,7 +100,7 @@ This design ensures deterministic, stable outputs for identical coordinates whil
 1. Clone the repository
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/PrajwalShetty-114/K-Means-Clustering.git
 cd "K-Means Clustering"
 ```
 
