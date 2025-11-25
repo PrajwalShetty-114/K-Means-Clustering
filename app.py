@@ -24,32 +24,27 @@ try:
 except Exception as e:
     print(f"❌ FATAL: Error loading models: {e}")
 
-# --- 2. Define Cluster Labels (Based on your Colab Output) ---
-# We map Cluster ID -> (Label, Description)
-# Cluster 1: ~14k (Lowest)
-# Cluster 3: ~26k
-# Cluster 0: ~38k
-# Cluster 2: ~52k (Highest)
-
+# --- 2. Define Cluster Labels (Based on Daily Volume) ---
+# These define the "Personality" of the road based on 24-hour capacity.
 CLUSTER_LABELS = {
-    1: {
-        "label": "Moderate Flow",
-        "description": "Traffic is moving reasonably well. Typical for off-peak hours.",
+    1: { # ~13k Daily
+        "label": "Quiet Road",
+        "description": "Low daily traffic volume. Usually free-flowing.",
         "color": "#4CAF50" # Green
     },
-    3: {
-        "label": "High Traffic",
-        "description": "Volume is high. Expect some delays and slower speeds.",
-        "color": "#FFC107" # Amber/Yellow
+    3: { # ~25k Daily
+        "label": "Standard City Road",
+        "description": "Moderate daily volume. Typical urban traffic patterns.",
+        "color": "#FFC107" # Amber
     },
-    0: {
-        "label": "Very High Traffic",
-        "description": "Roads are becoming saturated. Significant delays likely.",
+    0: { # ~38k Daily
+        "label": "Busy Arterial Road",
+        "description": "High daily volume. Prone to regular congestion.",
         "color": "#FF9800" # Orange
     },
-    2: {
-        "label": "Severe Congestion",
-        "description": "Critical traffic volume. Expect stop-and-go conditions.",
+    2: { # ~52k Daily
+        "label": "Major Junction / Hub",
+        "description": "Extreme daily volume. Critical traffic node.",
         "color": "#F44336" # Red
     }
 }
@@ -60,52 +55,52 @@ def predict():
     try:
         data = request.get_json()
         
-        # In a real scenario, we would fetch the *current* live traffic volume
-        # for the requested location to classify it.
-        # Since we don't have live sensors, we will use a 'Simulated' volume
-        # based on the location to show how the clustering works.
-        
-        # A. Extract Location (We use this to seed our random simulation)
         lat = data['coordinates']['lat']
         lng = data['coordinates']['lng']
         
-        # B. Simulate a Traffic Volume (for demonstration)
-        # We use the coordinate to generate a consistent pseudo-random number
-        # This ensures the same location always gives the same result
+        # --- SIMULATION LOGIC ---
+        # Since we don't have live sensors, we simulate the "Daily Volume"
+        # for this specific coordinate to see what "Type" of road it is.
+        
+        # 1. Create a stable seed from coordinates (so the result is consistent)
         seed = int((lat + lng) * 10000)
         np.random.seed(seed)
         
-        # Generate a random volume between 10,000 and 55,000 (your data range)
-        simulated_volume = np.random.randint(10000, 55000)
+        # 2. Generate a random DAILY volume (10k to 60k)
+        # This matches the range your K-Means model was trained on.
+        simulated_daily_volume = np.random.randint(10000, 60000)
         
-        # C. Prepare Data for Model
-        # 1. Reshape to 2D array
-        input_data = np.array([[simulated_volume]])
-        # 2. Scale using the saved scaler
+        # --- PREDICTION ---
+        # 1. Reshape & Scale
+        input_data = np.array([[simulated_daily_volume]])
         scaled_data = scaler.transform(input_data)
         
-        # D. Predict Cluster
+        # 2. Predict Cluster ID
         cluster_id = int(kmeans.predict(scaled_data)[0])
         
-        # E. Get Label info
+        # 3. Get Label info
         cluster_info = CLUSTER_LABELS.get(cluster_id, {
             "label": "Unknown",
             "description": "Pattern not recognized",
             "color": "#9E9E9E"
         })
 
-        # F. Response
+        # --- RESPONSE ---
+        # We calculate an "Estimated Hourly Avg" just for user reference
+        est_hourly = int(simulated_daily_volume / 12)
+
         response = {
             "clusterID": cluster_id,
-            "trafficState": cluster_info["label"],
+            "trafficState": cluster_info["label"], # e.g. "Busy Arterial Road"
             "description": cluster_info["description"],
             "color": cluster_info["color"],
-            "volumeAnalyzed": simulated_volume,
-            # Chart Data: We return the distribution of clusters as "Typical Patterns"
+            "volumeAnalyzed": f"{simulated_daily_volume} (Daily Total)",
+            "estimatedHourly": f"~{est_hourly} vehicles/hour",
+            
+            # Chart Data: Distribution of road types in the city
             "patternDistribution": {
-                "labels": ["Moderate Flow", "High Traffic", "Very High", "Severe"],
-                # Dummy distribution data for the pie chart
-                "data": [35, 30, 20, 15] 
+                "labels": ["Quiet Road", "Standard Road", "Busy Arterial", "Major Hub"],
+                "data": [35, 30, 20, 15] # Dummy distribution stats
             }
         }
         
