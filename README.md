@@ -180,13 +180,4 @@ docker run -p 8004:8004 pattern-detective:latest
 
 ---
 
-If you want, I can:
-- Run a quick local test request and show sample output,
-- Add an OpenAPI/Swagger wrapper for interactive docs,
-- Convert `patternDistribution` to be dynamically computed from training statistics.
-
-Drop a note on which next step you prefer.
-
----
-
 _Generated on behalf of the Pattern Detective microservice — clear, deterministic, and ready for integration._
